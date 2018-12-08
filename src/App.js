@@ -142,18 +142,18 @@ class App extends Reflux.Component {
     }
 
     nextClick = (question, value, madatory) => {
-        // if(madatory && value){
+        if(madatory && value){
             this.setState(nextState => {
                 const { index } = nextState;
                 if (index < 10) {
                     return { index: index + 1, errorMsg: '' };
                 }
             });
-        // } else{
-        //     this.setState({
-        //         errorMsg: 'Please enter the above field'
-        //     })
-        // }
+        } else{
+            this.setState({
+                errorMsg: 'Please enter the above field'
+            })
+        }
        Actions.addValue(question, value); 
     };
 
