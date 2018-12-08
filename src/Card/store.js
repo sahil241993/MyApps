@@ -8,7 +8,7 @@ export class StatusStore extends Reflux.Store
         super();
         this.listenables = Actions;
         this.state = {
-            value: {}
+            value: JSON.parse(localStorage.getItem('values')) || {}
         }
     }
 
@@ -16,11 +16,13 @@ export class StatusStore extends Reflux.Store
     {
         this.setState((prevState)=>{
             const {value: prevValue = {}} = prevState;
+            const obj = {
+                ...prevValue,
+                [question]: value,
+            }
+            localStorage.setItem('values', JSON.stringify(obj));
             return {
-                value: {
-                    ...prevValue,
-                    [question]: value,
-                }
+                value: obj,
             }
         })
         // calls on Actions.firstAction();

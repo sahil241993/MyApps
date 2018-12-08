@@ -5,9 +5,9 @@ import {StatusStore, Actions} from './Card/store'
 
 const cardBody = (type, value, options = [], onChange) => {
     if (type === "text") {
-        return <input value={value} onChange = {onChange}/>;
+        return <input value={value} onChange = {(event) => onChange(event.target.value)}/>;
     } else if (type === "mobile_number") {
-        return <input key = {type} type="number" value={value} onChange = {onChange}/>;
+        return <input key = {type} type="number" value={value} onChange = {(event) => onChange(event.target.value)}/>;
     } else if (type === "single-select multi-choice") {
         return options.map((ins, index) => {
             return (
@@ -15,29 +15,42 @@ const cardBody = (type, value, options = [], onChange) => {
                     key={index}
                     className="input-group"
                     style={{ "margin-left": "10px" }}
+                    onChange = {(event) => onChange(event.target.value)}
                 >
-                    <input type="radio" name="radio" checked = {index === value} onChange = {onChange}/>
+                    <input type="radio" name="radio" value = {index} 
+                    checked = {+value === +index}
+                    />
                     {ins}
                 </span>
             );
         });
     } else if (type === "multi-select multi-choice") {
+        const arr = value || []
         return options.map((ins, index) => {
             return (
                 <span
                     key={index}
                     className="input-group"
                     style={{ "margin-left": "10px" }}
+                    onChange = {(event) => 
+                    onChange(arr.indexOf(event.target.value) > 0
+                     ?
+                      arr.splice(arr.indexOf(event.target.value),1)
+                     :
+                     arr.concat(event.target.value)
+                    )
+                    }
                 >
-                    <input type="checkbox" name="radio" 
-                      checked = {(value || []).indexOf(index) > 0}
+                    <input type="checkbox"
+                      value = {index}
+                      checked = {arr.indexOf(index.toString()) > -1}
                     />
                     {ins}
                 </span>
             );
         });
     }
-    return <input key = {type} type={type} value={value} onChange = {onChange}/>;
+    return <input key = {type} type={type} value={value} onChange = {(event) => onChange(event.target.value)}/>;
 };
 
 class Card extends React.Component {
@@ -49,10 +62,12 @@ class Card extends React.Component {
         }
     }
     onChange = (event) => {
-        this.setState({value: event.target.value})
+        console.log('#########', event)
+        this.setState({value: event})
     }
     render(){
-    const { cardData = {}, value, nextClick, prevClick, errorMsg} = this.props
+    const { cardData = {}, nextClick, prevClick, errorMsg} = this.props
+    const {value} = this.state;
     const { question, type, madatory, options } = cardData;
     return (
         <React.Fragment>
@@ -127,18 +142,18 @@ class App extends Reflux.Component {
     }
 
     nextClick = (question, value, madatory) => {
-        if(madatory && value){
+        // if(madatory && value){
             this.setState(nextState => {
                 const { index } = nextState;
                 if (index < 10) {
                     return { index: index + 1, errorMsg: '' };
                 }
             });
-        } else{
-            this.setState({
-                errorMsg: 'Please enter the above field'
-            })
-        }
+        // } else{
+        //     this.setState({
+        //         errorMsg: 'Please enter the above field'
+        //     })
+        // }
        Actions.addValue(question, value); 
     };
 
