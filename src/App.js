@@ -3,13 +3,14 @@ import Reflux from 'reflux'
 import fakedata from "./Card/CardData";
 import {StatusStore, Actions} from './Card/store'
 
-const cardBody = (type, value, options = [], onChange) => {
+const cardBody = (type, value, options = [], onChange, errorMsg) => {
+    let element;
     if (type === "text") {
-        return <input value={value} onChange = {(event) => onChange(event.target.value)}/>;
+        element =  <input value={value} onChange = {(event) => onChange(event.target.value)}/>;
     } else if (type === "mobile_number") {
-        return <input key = {type} type="number" value={value} onChange = {(event) => onChange(event.target.value)}/>;
+        element = <input key = {type} type="number" value={value} onChange = {(event) => onChange(event.target.value)}/>;
     } else if (type === "single-select multi-choice") {
-        return options.map((ins, index) => {
+        element = options.map((ins, index) => {
             return (
                 <span
                     key={index}
@@ -18,7 +19,7 @@ const cardBody = (type, value, options = [], onChange) => {
                     onChange = {(event) => onChange(event.target.value)}
                 >
                     <input type="radio" name="radio" value = {index} 
-                    checked = {+value === +index}
+                    checked = {+value === index}
                     />
                     {ins}
                 </span>
@@ -26,21 +27,21 @@ const cardBody = (type, value, options = [], onChange) => {
         });
     } else if (type === "multi-select multi-choice") {
         const arr = value || []
-        return options.map((ins, index) => {
+        element = options.map((ins, index) => {
             return (
                 <span
                     key={index}
                     className="input-group"
                     style={{ "margin-left": "10px" }}
-                    onChange = {(event) => 
-                    onChange(arr.indexOf(event.target.value) > 0
-                     ?
-                      arr.splice(arr.indexOf(event.target.value),1)
-                     :
-                     arr.concat(event.target.value)
-                    )
+                    onChange = {(event) => {
+                        onChange(arr.indexOf(event.target.value) > -1
+                        ?
+                        arr.filter(obj => obj!==event.target.value)
+                        :
+                        arr.concat(event.target.value)
+                        )
                     }
-                >
+                }>
                     <input type="checkbox"
                       value = {index}
                       checked = {arr.indexOf(index.toString()) > -1}
@@ -49,8 +50,11 @@ const cardBody = (type, value, options = [], onChange) => {
                 </span>
             );
         });
-    }
-    return <input key = {type} type={type} value={value} onChange = {(event) => onChange(event.target.value)}/>;
+    } else element = <input key = {type} type={type} value={value} onChange = {(event) => onChange(event.target.value)}/>;
+    return <div>
+        <div>{element}</div>
+        <div style= {{color: 'red'}}>{errorMsg}</div>
+    </div>;
 };
 
 class Card extends React.Component {
@@ -62,7 +66,7 @@ class Card extends React.Component {
         }
     }
     onChange = (event) => {
-        console.log('#########', event)
+        console.log('########', event)
         this.setState({value: event})
     }
     render(){
@@ -95,7 +99,7 @@ class Card extends React.Component {
                             "text-align": "center"
                         }}
                     >
-                        {cardBody(type, value, options, this.onChange)}
+                        {cardBody(type, value, options, this.onChange, errorMsg)}
                     </div>
 
                     <footer
@@ -114,7 +118,6 @@ class Card extends React.Component {
                         </div>
                     </footer>
                 </div>
-                <div>{errorMsg}</div>
             </div>
         </React.Fragment>
     );
@@ -141,15 +144,15 @@ class App extends Reflux.Component {
         this.store = StatusStore; // <- just assign the store class itself
     }
 
-    nextClick = (question, value, madatory) => {
-        if(madatory && value){
+    nextClick = (question, value, mandatory) => {
+        if(!!value || !mandatory){
             this.setState(nextState => {
                 const { index } = nextState;
                 if (index < 10) {
                     return { index: index + 1, errorMsg: '' };
                 }
             });
-        } else{
+        } else if(mandatory){
             this.setState({
                 errorMsg: 'Please enter the above field'
             })
